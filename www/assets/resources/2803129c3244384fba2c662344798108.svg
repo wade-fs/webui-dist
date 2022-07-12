@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="terminal_active_restart" width="24" height="24" viewBox="0 0 24 24">
+    <defs>
+        <style>
+            .cls-1{fill:none}
+        </style>
+    </defs>
+    <path id="Path_128" d="M0 0h24v24H0z" class="cls-1"/>
+    <path id="Path_534" fill="#80bc00" d="M19 6.5H5a4.012 4.012 0 0 0-4 4v2a4.012 4.012 0 0 0 4 4h14a4.012 4.012 0 0 0 4-4v-2a4.012 4.012 0 0 0-4-4zM8.853 14H4.519v-2h4.334zm0-3H4.519V9h4.334zm3.674 2.3a1.8 1.8 0 1 1 1.8-1.8 1.8 1.8 0 0 1-1.8 1.8zm5.473 0a1.8 1.8 0 1 1 1.8-1.8 1.8 1.8 0 0 1-1.8 1.8z" transform="translate(0 6.5)"/>
+    <g id="Component_134_9" transform="translate(5 1)">
+        <path id="Path_598" d="M7.5 11.175h13v13h-13z" class="cls-1" transform="translate(-7.5 -11.175)"/>
+    </g>
+    <g id="Group_1583">
+        <path id="Path_653" fill="#dc3545" d="M7 0a7 7 0 1 1-7 7 7 7 0 0 1 7-7z" transform="translate(5 1)"/>
+        <path id="Union_30" fill="#fff" d="M63 1330a1 1 0 1 1 1 1 1 1 0 0 1-1-1zm0-3v-5h2v5z" transform="translate(-52 -1318)"/>
+    </g>
+</svg>

@@ -1,0 +1,40 @@
+#!/bin/bash
+_Modes=("AP-3400A" "AP-3500" "AP-3500-H01" "ARP-2917AP" "ARP-2919AP" "ARP-2921AP" "B01_Series" "BoxPC138G" "BoxPC138H" "E01_Series" "G01_Series" "H01_Series" "Microbox-7824A-B01" "Microbox-7824B-B01")
+
+function GenModel() {
+  Idx=$(shuf -i 0-13 -n 1)
+  echo ${_Modes[${Idx}]}
+}
+
+function Usage() {
+	echo "Usage: $0 TYPE FIELD1 FIELD2..."
+	exit 0
+}
+
+ip=localhost
+type=$1; shift
+case $type in
+	Terminal|RdsServer|Application|*Group)
+		Id=$1; shift
+		Action=$1; shift
+		[ -z "$Id" ] && Usage && exit 1
+		[ -z "$Action" ] && Usage && exit 1
+		payload="{\"Id\":\"${Id}\",\"Action\":\"${Action}\"}"
+		;;
+	*Status)
+		Id=$1; shift
+		Status=$1; shift
+		[ -z "$Id" ] && Usage && exit 1
+		[ -z "$Status" ] && Usage && exit 1
+		payload="{\"Id\":\"${Id}\",\"Status\":\"${Status}\"}"
+		;;
+	PendingTerminals)
+		Ip=$1; shift
+		Mac=$1; shift
+		Model=$(GenModel)
+		[ -z "$Ip" ] && Usage && exit 1
+		[ -z "$Mac" ] && Usage && exit 1
+		payload="[{\"Ip\":\"${Ip}\",\"Mac\":\"${Mac}\",\"Model\":\"${Model}\",\"Manufacturer\":\"Arista\"}]"
+		;;
+esac
+curl -s -X POST -d "{\"Type\":\"${type}\",\"Payload\":${payload}}" http://${ip}:8088/ws/post -H 'Content-Type: application/json' -o - && exit 0

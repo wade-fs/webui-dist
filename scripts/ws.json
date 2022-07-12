@@ -1,0 +1,44 @@
+{
+	"Terminal": {
+		"Id": "ID",
+		"Action": "ACTION"
+	},
+	"TerminalGroup": {
+		"Id": "ID",
+		"Action": "ACTION"
+	},
+	"TerminalStatus": {
+		"Id": "ID",
+		"Status": "STATUS"
+	},
+	"PendingTerminals": [{
+		"Ip": "IP",
+		"Mac": "MAC",
+		"Model": "MODEL",
+		"Manufacturer": "Arista"
+	}],
+	"RdsServer": {
+		"Id": "ID",
+		"Action": "ACTION"
+	},
+	"RdsServerGroup": {
+		"Id": "ID",
+		"Action": "ACTION"
+	},
+	"RdsServerStatus": {
+		"Id": "ID",
+		"Status": "STATUS"
+	},
+	"Application": {
+		"Id": "ID",
+		"Action": "ACTION"
+	},
+	"ApplicationGroup": {
+		"Id": "ID",
+		"Action": "ACTION"
+	},
+	"ApplicationStatus": {
+		"Id": "ID",
+		"Status": "STATUS"
+	}
+}
