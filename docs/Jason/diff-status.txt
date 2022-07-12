@@ -1,0 +1,527 @@
+diff --git a/webui/src/components/ObjectCommon/EditorTopbar.js b/webui/src/components/ObjectCommon/EditorTopbar.js
+index a048e92a..ec2dd161 100644
+--- a/webui/src/components/ObjectCommon/EditorTopbar.js
++++ b/webui/src/components/ObjectCommon/EditorTopbar.js
+@@ -78,7 +78,7 @@ export default class EditorTopbar extends React.Component {
+     let {
+       props: { dispatch, editType, status, editingId, onCancel },
+     } = this;
+-    if (status === "OFF") return;
++    if (status.indexOf("F") >= 0) return;
+     dispatch(operateTerminal(editingId, operateType));
+   };
+ 
+@@ -100,14 +100,14 @@ export default class EditorTopbar extends React.Component {
+         showLock = true,
+         status,
+         disabled = false,
+-        needToRestart = false,
+         mac = "",
++        isNtr = false,
+         isBooting = false,
+         isActive = false,
+ 		isError = false,
+         isBusy = false,
+         isOff = false,
+-        noLic = false,
++        isNolic = false,
+         showOp = false,
+         showTrash = true,
+         showPower = true,
+@@ -169,7 +169,7 @@ export default class EditorTopbar extends React.Component {
+                   <div className="editor-operate-list">
+                     {!isGroup && (
+                       <Fragment>
+-                        {isActive||isError||noLic? (
++                        {isActive||isError||isNolic? (
+                           <div
+                             className="editor-operate-calibrate"
+                             onClick={() => this.operateAction("calibrate")}
+@@ -177,7 +177,7 @@ export default class EditorTopbar extends React.Component {
+                         ) : (
+                           <div className="editor-operate-calibrate-disabled"></div>
+                         )}
+-                        {isActive||isError||noLic ? (
++                        {isActive||isError||isNolic ? (
+                           <div
+                             className="editor-operate-reboot"
+                             onClick={() => this.operateAction("reboot")}
+@@ -185,10 +185,10 @@ export default class EditorTopbar extends React.Component {
+                         ) : (
+                           <div className="editor-operate-reboot-disabled"></div>
+                         )}
+-                        {isActive||isError||noLic ? (
++                        {isActive||isError||isNolic ? (
+                           <div
+                             className={
+-                              needToRestart
++                              isNtr
+                                 ? "editor-operate-restart-alert"
+                                 : "editor-operate-restart"
+                             }
+@@ -235,7 +235,7 @@ export default class EditorTopbar extends React.Component {
+                     className="editor-operate-actions"
+                     onClick={() => this.toggleActionList()}
+                   >
+-                    {(disabled || (isActive && needToRestart)) && (
++                    {(disabled || (isActive && isNtr)) && (
+                       <div className="editor-operate-actions-alert"></div>
+                     )}
+                   </div>
+diff --git a/webui/src/components/ObjectCommon/ObjectDashboard.js b/webui/src/components/ObjectCommon/ObjectDashboard.js
+index 0817937e..9f22aa19 100644
+--- a/webui/src/components/ObjectCommon/ObjectDashboard.js
++++ b/webui/src/components/ObjectCommon/ObjectDashboard.js
+@@ -128,7 +128,7 @@ export default class ObjectDashboard extends React.Component {
+       if (filterActive !== null) {
+         data = data.filter((item) => {
+           let { Status } = item;
+-          return filterActive ? Status === "ACTIVE" : Status === "OFF";
++          return filterActive ? Status.indexOf("A")>=0 : Status.indexOf("F")>=0;
+         });
+       }
+       if (filterEnable !== null)
+@@ -236,12 +236,12 @@ export default class ObjectDashboard extends React.Component {
+       ).length;
+       activeCount = data.filter(
+         (node) =>
+-          node.Status === "ACTIVE" &&
++          node.Status.indexOf("A")>=0 &&
+           (node.ParentId === selectedId || selectedId === undefined)
+       ).length;
+       offCount = data.filter(
+         (node) =>
+-          node.Status === "OFF" &&
++          node.Status.indexOf("F")>=0 &&
+           (node.ParentId === selectedId || selectedId === undefined)
+       ).length;
+       disabledCount = data.filter(
+diff --git a/webui/src/components/ObjectCommon/ObjectTitles.js b/webui/src/components/ObjectCommon/ObjectTitles.js
+index 6417b745..cbc527bb 100644
+--- a/webui/src/components/ObjectCommon/ObjectTitles.js
++++ b/webui/src/components/ObjectCommon/ObjectTitles.js
+@@ -113,7 +113,7 @@ export default class ObjectTitles extends React.Component {
+     let {
+       props: { dispatch },
+     } = this;
+-	if (status === "OFF") return;
++	if (status.indexOf("F") >= 0) return;
+     dispatch(operateTerminal(editingId, operateType));
+   };
+ 
+@@ -589,31 +589,29 @@ export default class ObjectTitles extends React.Component {
+                   ? false
+                   : selected[Id];
+   const status = object.Status ?? "";
+-  const disabled = object.Disabled ?? false;
+-  const needToRestart = object.NeedToRestart ?? false;
+   const editingId = object.Id ?? 0;
++  const disabled = object.Disabled ?? false;
+   const ip = object.IpAddress ?? "";
+   const mac = object.MAC ?? "";
+   const power = ip !== "";
+-  const isBusy = editingId > 0 && power &&
+-           (status === "REBOOT" || status === "RESTART" || status === "POWERON" || status === "POWEROFF");
+-  const isDisabled = status === "DISABLED" || disabled;
+-  const noLic = editingId > 0 && power && status === "NOLIC";
+-  const isError = editingId > 0 && power && status === "ERROR";
+-  const isErrorDisabled = isError && isDisabled;
+-  const isErrorNtr = isError && needToRestart;
+-  const isErrorDisabledNtr = isError && isDisabled && needToRestart;
+-  const isOff = editingId == 0 || status === "OFF" || !power;
+-  const isOffDisabled = isOff && isDisabled;
+-  const isActive = editingId > 0 && power && (status === "ACTIVE" || isError || noLic);
+-  const isActiveDisabled = editingId > 0 && power && isDisabled;
+-  const isActiveNtr = editingId > 0 && power && needToRestart;
+-  const isActiveDisabledNtr = editingId > 0 && power && isDisabled && needToRestart;
+-  const isActiveBusy = editingId > 0 && power && isBusy;
+-  const isBooting = editingId > 0 && status === "BOOTING";
+-  const isBootingDisabled = isBooting && isDisabled; 
+ 
+-  console.log("getTerminalStatus("+mac+","+isOff+","+isBooting+","+isError+","+isActive+","+noLic+")");
++  const isNtr = editingId > 0 && status.indexOf("N") >= 0;
++  const isNolic = editingId > 0 && status.indexOf("I") >= 0;
++  const isBusy = editingId > 0 && status.indexOf("B") >= 0;
++  const isDisabled = status.indexOf("D") >= 0;
++  const isOff = status == "" || !power || status.indexOf("F") >= 0;
++  const isOffDisabled = isOff && isDisabled;
++  const isActive = editingId > 0 && status.indexOf("A") >= 0;
++  const isActiveDisabled = isActive && isDisabled;
++  const isActiveNtr = isActive && isNtr;
++  const isActiveDisabledNtr = isActive && isDisabled && isNtr;
++  const isActiveBusy = isBusy;
++  const isBooting = status.indexOf("B") >= 0;
++  const isBootingDisabled = isBooting && isDisabled;
++  const isError = editingId > 0 && status.indexOf("E") >= 0;
++  const isErrorDisabled = isError && isDisabled;
++  const isErrorNtr = isError && isNtr;
++  const isErrorDisabledNtr = isError && isDisabled && isNtr;
+ 
+             return (
+               <li key={Id} className="main-page-list" data-expand={showExpand}>
+@@ -680,7 +678,7 @@ export default class ObjectTitles extends React.Component {
+                         }
+                       ></div>
+                       {object.Status === undefined ||
+-                      object.Status === "OFF" ||
++                      object.Status.indexOf("F")>=0 ||
+                       object.Status === "" ? (
+                         <div
+                           className="list-action-delete"
+@@ -707,7 +705,7 @@ export default class ObjectTitles extends React.Component {
+                       {this.props.object === TerminalObject &&
+                         (showActionList && idx === actionListIdx ? (
+                           <div className="home-operate-list">
+-                            {isActive||isError||noLic? (
++                            {isActive||isError||isNolic? (
+                               <div
+                                 className="operate-calibrate"
+                                 onClick={
+@@ -719,7 +717,7 @@ export default class ObjectTitles extends React.Component {
+                             ) : (
+                               <div className="operate-calibrate-disabled"></div>
+                             )}
+-                            {isActive || isError || noLic ? (
++                            {isActive || isError || isNolic ? (
+                               <div
+                                 className="operate-reboot"
+                                 onClick={
+@@ -731,11 +729,11 @@ export default class ObjectTitles extends React.Component {
+                             ) : (
+                               <div className="operate-reboot-disabled"></div>
+                             )}
+-                            {isActive || isError || noLic ? (
++                            {isActive || isError || isNolic ? (
+                               <div
+                                 className={
+                                   object.NeedToRestart === true &&
+-                                  object.Status === "ACTIVE"
++                                  object.Status.indexOf("A") >= 0
+                                     ? "operate-restart-alert"
+                                     : "operate-restart"
+                                 }
+@@ -776,7 +774,7 @@ export default class ObjectTitles extends React.Component {
+                                       : () => this.operateAction(Id, "poweron")
+                                   }
+                                 ></div>
+-                              ) : (isActive || isError || noLic ? (
++                              ) : (isActive || isError || isNolic ? (
+                                 <div
+                                   className="operate-power-off"
+                                   onClick={
+@@ -802,7 +800,7 @@ export default class ObjectTitles extends React.Component {
+                                 : () => this.toggleActionList(idx)
+                             }
+                           >
+-                            {(isDisabled || needToRestart) && (
++                            {(isDisabled || isNtr ) && (
+                               <div
+                                 className="list-action-operates-alert"
+                                 onClick={
+diff --git a/webui/src/components/Terminals/Editor/About/StatusInfoCard.js b/webui/src/components/Terminals/Editor/About/StatusInfoCard.js
+index 2e8f1468..48aa73b8 100644
+--- a/webui/src/components/Terminals/Editor/About/StatusInfoCard.js
++++ b/webui/src/components/Terminals/Editor/About/StatusInfoCard.js
+@@ -21,13 +21,13 @@ export default function StatusInfoCard({
+       (node) => node.ParentId === editingId
+     ).length;
+     activeCount = terminals.data.filter(
+-      (node) => node.ParentId === editingId && node[Status] == "ACTIVE"
++      (node) => node.ParentId === editingId && node[Status].indexOf("A") >= 0
+     ).length;
+     offCount = terminals.data.filter(
+-      (node) => node.ParentId === editingId && node[Status] == "OFF"
++      (node) => node.ParentId === editingId && node[Status].indexOf("F") >= 0
+     ).length;
+     disableCount = terminals.data.filter(
+-      (node) => node.ParentId === editingId && node[Disabled] === true
++      (node) => node.ParentId === editingId && node[Status].indexOf("D") >= 0
+     ).length;
+     // lockedCount = children.filter(
+     //   (node) =>
+diff --git a/webui/src/components/Terminals/Editor/Configuration/HardwareCard.js b/webui/src/components/Terminals/Editor/Configuration/HardwareCard.js
+index 00437e05..2b825815 100644
+--- a/webui/src/components/Terminals/Editor/Configuration/HardwareCard.js
++++ b/webui/src/components/Terminals/Editor/Configuration/HardwareCard.js
+@@ -42,13 +42,22 @@ export default class HardwareCard extends React.Component {
+       );
+       this.setState({ modelOptions: modelOptions });
+     }
++	const status = this.props.status ?? "";
++	const isOff = (status == "" ||
++		status.indexOf("F") >= 0 ||
++		status.indexOf("I") >= 0 ||
++		status.indexOf("B") >= 0 ||
++		status.indexOf("W") >= 0 ||
++		status.indexOf("O") >= 0);
++	const isActive = (status.indexOf("A") >= 0 ||
++		status.indexOf("E") >= 0 ||
++		status.indexOf("R") >= 0 ||
++		status.indexOf("T") >= 0 ||
++		status.indexOf("C") >= 0);
+     // check status change
+-    if (prevProps.status !== this.props.status && this.props.status === "OFF") {
++    if (prevProps.status !== this.props.status && isOff) {
+       this.setState({ canApply: true });
+-    } else if (
+-      prevProps.status !== this.props.status &&
+-      this.props.status === "ACTIVE"
+-    ) {
++    } else if (prevProps.status !== this.props.status && isActive) {
+       this.setState({ canApply: false });
+     }
+   }
+@@ -147,7 +156,12 @@ export default class HardwareCard extends React.Component {
+         firmwarePackageOptions,
+       },
+     } = this;
+-    const canEditModel = status === "OFF";
++	const canEditModel = (status == "" ||
++		status.indexOf("F") >= 0 ||
++		status.indexOf("I") >= 0 ||
++		status.indexOf("B") >= 0 ||
++		status.indexOf("W") >= 0 ||
++		status.indexOf("O") >= 0);
+     return (
+       isLoaded && (
+         <ul className="editor-content">
+@@ -175,19 +189,6 @@ export default class HardwareCard extends React.Component {
+             },
+             Select
+           )}
+-          {/* {this.getWrapperField(
+-            "FIRMWARE PACKAGE",
+-            FirmwarePackage,
+-            {
+-              type: "select",
+-              value:
+-                data[FirmwarePackage] === ""
+-                  ? "modeldefault"
+-                  : data[FirmwarePackage],
+-              options: firmwarePackageOptions,
+-            },
+-            Select
+-          )} */}
+           {this.getWrapperField(
+             "MAC Address",
+             MAC,
+diff --git a/webui/src/components/Terminals/Editor/Shadow/index.js b/webui/src/components/Terminals/Editor/Shadow/index.js
+index 0d7b91ee..b84618f8 100644
+--- a/webui/src/components/Terminals/Editor/Shadow/index.js
++++ b/webui/src/components/Terminals/Editor/Shadow/index.js
+@@ -4,7 +4,6 @@ import { terminalStatus } from "../Header";
+ 
+ import { LOADED } from "const/DataLoaderState";
+ import { ASKFIRST } from "const/Terminals/ShadowMode";
+-import { ACTIVE } from "const/Terminals/Status";
+ import { IpAddress } from "const/Terminals/TerminalFieldNames";
+ 
+ import { getObjectProperty } from "lib/Util";
+@@ -46,7 +45,7 @@ export default class Shadow extends React.Component {
+     );
+     const status = terminalStatus;
+ 
+-    const terminalActive = status === ACTIVE;
++    const terminalActive = status.indexOf("A") >= 0;
+ 
+     return (
+       state == LOADED && (
+diff --git a/webui/src/components/Terminals/Editor/index.js b/webui/src/components/Terminals/Editor/index.js
+index fd351ce2..9a2f7cd8 100644
+--- a/webui/src/components/Terminals/Editor/index.js
++++ b/webui/src/components/Terminals/Editor/index.js
+@@ -364,17 +364,27 @@ export default class Editor extends React.Component {
+     );
+     const status = terminal?.Status ?? "";
+     const disabled = terminal?.Disabled ?? "";
+-    const needToRestart = terminal?.NeedToRestart ?? "";
+     const ip = terminal?.IpAddress ?? "";
+     const mac = terminal?.MAC ?? "";
+     const power = ip != "";
+-    const isOff = !power || status === "OFF";
+-    const isBooting=editingId > 0 && status === "BOOTING";
+-    const isError=editingId > 0 && status === "ERROR";
+-    const noLic = editingId > 0 && power && status == "NOLIC";
+-    const isActive=editingId > 0 && power && (status === "ACTIVE" || isError || noLic);
+-    const isBusy=editingId > 0 && power && (status === "REBOOT" || status === "RESTART" || status === "POWERON" || status === "POWEROFF");
+-	console.log("Editor("+mac+","+isOff+","+isBooting+","+isError+","+isActive+","+noLic+")");
++
++    const isNtr = editingId > 0 && status.indexOf("N") >= 0;
++    const isNolic = editingId > 0 && status.indexOf("I") >= 0;
++    const isBusy = editingId > 0 && status.indexOf("B") >= 0;
++    const isDisabled = status.indexOf("D") >= 0;
++    const isOff = status == "" || !power || status.indexOf("F") >= 0;
++    const isOffDisabled = isOff && isDisabled;
++    const isActive = editingId > 0 && status.indexOf("A") >= 0;
++    const isActiveDisabled = isActive && isDisabled;
++    const isActiveNtr = isActive && isNtr;
++    const isActiveDisabledNtr = isActive && isDisabled && isNtr;
++    const isActiveBusy = isBusy;
++    const isBooting = status.indexOf("B") >= 0;
++    const isBootingDisabled = isBooting && isDisabled;
++    const isError = editingId > 0 && status.indexOf("E") >= 0;
++    const isErrorDisabled = isError && isDisabled;
++    const isErrorNtr = isError && isNtr;
++    const isErrorDisabledNtr = isError && isDisabled && isNtr;
+ 
+     this.title = terminal?.Name ?? "";
+ 
+@@ -428,18 +438,19 @@ export default class Editor extends React.Component {
+               lock={this.lock}
+               showTrash={
+                 isGroup ||
+-                (editingId != 0 && (status === "OFF" || status === ""))
++                (editingId != 0 && (status.indexOf("F")>=0 || status === ""))
+               }
+-              showOp={editingId != 0 && status !== "BOOTING"}
++              showOp={editingId != 0 && status.indexOf("B") == 0}
+               status={status}
+               disabled={disabled}
+-              needToRestart={needToRestart}
++              isNtr={isNtr}
+               mac={mac}
+               isBooting={isBooting}
+               isActive={isActive}
+               isError={isError}
+               isBusy={isBusy}
+-              noLic={noLic}
++              isNolic={isNolic}
++              isDisabled={isDisabled}
+               isFavorite={editingTerminal.data?.Favorite ?? false}
+               onCancel={this.cancelOnStatus}
+             />
+diff --git a/webui/src/components/Tree/MultiTreeItem.js b/webui/src/components/Tree/MultiTreeItem.js
+index b6de90f2..54e3b657 100644
+--- a/webui/src/components/Tree/MultiTreeItem.js
++++ b/webui/src/components/Tree/MultiTreeItem.js
+@@ -92,7 +92,7 @@ export default class MultiTreeItem extends Component {
+       case "terminalReplace":
+         if (
+           data.IsGroup ||
+-          ((data.Status === "OFF" || data.Status === "") && data.Replaceable)
++          ((data.Status.indexOf("F") >= 0 || data.Status === "") && data.Replaceable)
+         ) {
+           filter = false;
+         }
+diff --git a/webui/src/components/Tree/TreeItem.js b/webui/src/components/Tree/TreeItem.js
+index 113cbc01..0aaeac0f 100644
+--- a/webui/src/components/Tree/TreeItem.js
++++ b/webui/src/components/Tree/TreeItem.js
+@@ -219,7 +219,7 @@ export default class TreeItem extends Component {
+       case "terminalReplace":
+         if (
+           data.IsGroup ||
+-          ((wsItems[data.Id].Status === "OFF" ||
++          ((wsItems[data.Id].Status.indexOf("F") >= 0 ||
+             wsItems[data.Id].Status === "") &&
+             wsItems[data.Id].Replaceable)
+         ) {
+diff --git a/webui/src/utils/Status.js b/webui/src/utils/Status.js
+index 2ca42edf..18686886 100644
+--- a/webui/src/utils/Status.js
++++ b/webui/src/utils/Status.js
+@@ -6,26 +6,31 @@ export function getTerminalStatus(type, data) {
+   const power = ip !== "";
+   const status = data?.Status ?? "";
+   const disabled = data?.Disabled ?? false;
+-  const needToRestart = data?.NeedToRestart ?? false;
+-  const isBusy = status === "REBOOT" || status === "RESTART" || status === "POWERON" || status === "POWEROFF";
+-  const isDisabled = status === "DISABLED" || disabled;
+-  const isOff = editingId == 0 || status === "OFF" || !power;
++  const isNtr = editingId > 0 && status.indexOf("N") >= 0;
++  const isNolic = editingId > 0 && (status.indexOf("I") >= 0 || status.indexOf("W") >= 0 || status.indexOf("O") >= 0);
++  const isBusy = editingId > 0 && status.indexOf("U") >= 0;
++  const isDisabled = status.indexOf("D") >= 0;
++  const isOff = status.indexOf("F") >= 0;
+   const isOffDisabled = isOff && isDisabled;
+-  const isActive = editingId > 0 && power && status === "ACTIVE";
+-  const isActiveDisabled = editingId > 0 && power && isDisabled;
+-  const isActiveNtr = editingId > 0 && power && needToRestart;
+-  const isActiveDisabledNtr = editingId > 0 && power && isDisabled && needToRestart;
+-  const isActiveBusy = editingId > 0 && power && isBusy;
+-  const isBooting = status === "BOOTING";
++  const isActive = editingId > 0 && status.indexOf("A") >= 0;
++  const isActiveDisabled = isActive && isDisabled;
++  const isActiveNtr = isActive && isNtr;
++  const isActiveDisabledNtr = isActive && isDisabled && isNtr;
++  const isActiveBusy = isBusy;
++  const isBooting = status.indexOf("B") >= 0;
+   const isBootingDisabled = isBooting && isDisabled;
+-  const noLic = status === "NOLIC";
+-  const isError = editingId > 0 && power && status === "ERROR";
++  const isError = editingId > 0 && status.indexOf("E") >= 0;
+   const isErrorDisabled = isError && isDisabled;
+-  const isErrorNtr = isError && needToRestart;
+-  const isErrorDisabledNtr = isError && isDisabled && needToRestart;
+-  console.log("getTerminalStatus("+mac+","+isOff+","+isBooting+","+isError+","+isActive+","+noLic+")");
++  const isErrorNtr = isError && isNtr;
++  const isErrorDisabledNtr = isError && isDisabled && isNtr;
++  if (mac == "" || status == "F" || status == "OFF")
++    return `${type}-terminal-off`;
++  console.log("status "+status+" for "+type+" ("+mac+","+isOff+","+isBooting+","+isError+","+isActive+","+isNolic+","+isDisabled+","+isNtr+","+isBusy+")");
+ 
+-  if (noLic) return `${type}-terminal-booting-nolic`;
++  if (isNolic) return `${type}-terminal-booting-nolic`;
++  if (isOffDisabled) return `${type}-terminal-off-disabled`;
++  if (isBootingDisabled) return `${type}-terminal-booting-disabled`;
++  if (isBooting) return `${type}-terminal-booting`;
+   if (isErrorDisabledNtr) return `${type}-terminal-error-disabled-restart`;
+   if (isErrorDisabled) return `${type}-terminal-error-disabled`;
+   if (isErrorNtr) return `${type}-terminal-error-restart`;
+@@ -35,9 +40,6 @@ export function getTerminalStatus(type, data) {
+   if (isActiveNtr) return `${type}-terminal-active-restart`;
+   if (isActiveBusy) return `${type}-terminal-active-busy`;
+   if (isActive) return `${type}-terminal-active`;
+-  if (isBootingDisabled) return `${type}-terminal-booting-disabled`;
+-  if (isBooting) return `${type}-terminal-booting`;
+-  if (isOffDisabled) return `${type}-terminal-off-disabled`;
+   return `${type}-terminal-off`;
+ }
+ 
+@@ -80,30 +82,21 @@ export function checkExpandTitleError(data) {
+ 
+ export function checkExpandTerminalTitle(data) {
+   if (data?.Error == null) return "expand-list-card-title";
+-  switch (data?.Status ?? "") {
+-    case "ACTIVE":
+-      if (data["Error"] !== "") {
+-        return "expand-list-card-title-error";
+-      }
+-      if (data.Disabled) {
+-        return "expand-list-card-title-active";
+-      }
+-      if (data.NeedToRestart) {
+-        return "expand-list-card-title-active";
+-      }
+-      return "expand-list-card-title-active";
+-    case "BOOTING":
+-      return "expand-list-card-title-booting";
+-    case "OFF":
+-    case "":
+-      if (data["Error"] !== "") {
+-        return "expand-list-card-title-error";
+-      }
+-      if (data.Disabled) {
+-        return "expand-list-card-title";
+-      }
+-      return "expand-list-card-title";
+-    default:
+-      return "expand-list-card-title";
++  let status = data?.Status ?? "";
++  if (status == "" || status.indexOf("F") >= 0) {
++    return "expand-list-card-title";
+   }
++  if (status.indexOf("B") >= 0) {
++    return "expand-list-card-title-booting";
++  }
++  if (status.indexOf("E") >= 0) {
++    return "expand-list-card-title-error";
++  }
++  if (status.indexOf("D") >= 0 ||
++      status.indexOf("A") >= 0 ||
++      status.indexOf("N") >= 0) {
++    return "expand-list-card-title-active";
++  }
++
++  return "expand-list-card-title";
+ }
