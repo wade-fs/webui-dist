@@ -21,6 +21,7 @@ declare -A ATTR=(
   ["D"]=1
   ["N"]=2
 )
+
 function Mac(){ cat /dev/urandom | tr -dc '0-9A-F' | fold -w ${1:-12} | head -n 1; }
 function Model() {
   Idx=$(shuf -i 0-13 -n 1)
@@ -94,6 +95,13 @@ function PostReplace(){
   exit 0
 }
 
+function toBinary(){
+    local n bits sign=''
+    (($1<0)) && sign=-
+    for (( n=$sign$1 ; n>0 ; n >>= 1 )); do bits=$((n&1))$bits; done
+    printf "%s\n" "$sign${bits-0}"
+}
+
 function usage(){
   cat <<HELP
 Usage:
@@ -135,6 +143,8 @@ while getopts "gscrI:M:C:S:T:" opt; do
   *) echo "undefined opt ${OPTARG} in ${OPTIND}"; usage; exit 1;;
   esac
 done
+
+# echo "STATE[${STATUS}] = ${STATE[${STATUS}]} = 0x$(toBinary ${STATE[${STATUS}]})"
 
 [ -z "${IP}" ] && IP=localhost
 [ -n "${GETTERM}" ] && GetTerm ${IP} ${MAC} $(Model) && exit 0
